@@ -7,13 +7,13 @@ using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using Microsoft.Azure.Services.AppAuthentication;
 
-namespace Company.Function
+namespace Rbkl.io
 {
     public class LogAnalyticQuery
     {
         private static LogAnalyticQuery _instance;
         private static object _lock = new object();
-        private HttpClient _http = new HttpClient();
+        private static HttpClient _http = new HttpClient();
         private ILogger _log;
         private string _bearer;
 
@@ -35,7 +35,7 @@ namespace Company.Function
 
         ///Authenticate using Serivce Principal
         ///https://dev.loganalytics.io/documentation/Authorization/AAD-Setup
-        public async Task Authenticate(string directoryId, bool useMSI)
+        public async Task Authenticate(string directoryId, bool useMSI, string clientId, string clientSecret)
         {
             //Authenticate with MSI
             if (!useMSI)
@@ -48,8 +48,8 @@ namespace Company.Function
             //Use to authenticate without MSI
             var parameters = new Dictionary<string, string>{
                 {"grant_type","client_credentials"},
-                {"client_id","0b3c9929-a7a8-47e2-ae19-e4c7eb8b4085"},
-                {"client_secret","Y9nhf9pDa1e1.vAsn-Tqjm7_GO~aV_VA8W"},
+                {"client_id", clientId},
+                {"client_secret",clientSecret},
                 {"resource", "https://api.loganalytics.io"}
             };
             _log.LogInformation(parameters.ToString());

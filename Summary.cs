@@ -1,8 +1,8 @@
 
 using System;
-using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.Azure.Cosmos.Table;
 
-namespace Company.Function
+namespace Rbkl.io
 {
 
     public class Summary : TableEntity
