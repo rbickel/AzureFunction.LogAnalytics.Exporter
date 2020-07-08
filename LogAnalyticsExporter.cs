@@ -21,7 +21,7 @@ namespace Rbkl.io
         private static string _clientSecret = Environment.GetEnvironmentVariable("clientSecret");
         private const string _QUEUENAME = "batchcursors-queue";
         private const string _INDEXERTABLENAME = "BatchIndexTable";      
-        private const string _EVENTHUBENAME = "allevents"; 
+        private const string _EVENTHUBEPATH = "allevents"; 
         private static string _CURSORFORMAT = "yyyy-MM-dd HH:mm:ss.fffffff";
         private const string _CURSORCOLUMNNAME = "cursor";
         private const int _TAKE = 1000;
@@ -89,7 +89,7 @@ namespace Rbkl.io
         public static async Task BatchProcessor(
             [QueueTrigger(_QUEUENAME)] string message,
             [Table(_INDEXERTABLENAME)] CloudTable summaryTable,
-            [EventHub("allevents", Connection = "EventHubConnection")] IAsyncCollector<string> eventHub,
+            [EventHub(_EVENTHUBEPATH, Connection = "EventHubConnection")] IAsyncCollector<string> eventHub,
             ILogger logger)
         {
             var run = DateTime.Now;
@@ -112,7 +112,7 @@ namespace Rbkl.io
         //[FunctionName("PullLogsFromLogAnalytics")]
         private static async Task PullLogsFromLogAnalytics(
             [TimerTrigger("*/5 * * * * *")] TimerInfo myTimer,
-            [EventHub("allevents")] IAsyncCollector<string> outputEvents,
+            [EventHub(_EVENTHUBEPATH, Connection = "EventHubConnection")] IAsyncCollector<string> outputEvents,
             [Table("LogStreamingIndex")] IAsyncCollector<Summary> summaryCollector,
             [Table("LogStreamingIndex")] CloudTable summaryTable,
             ILogger logger
