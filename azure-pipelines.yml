@@ -44,5 +44,14 @@ stages:
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
       artifact: drop
 
+    - task: UniversalPackages@0
+      inputs:
+        command: 'publish'
+        publishDirectory: '$(Build.ArtifactStagingDirectory)'
+        feedsToUsePublish: 'internal'
+        vstsFeedPublish: 'eeb388af-a63e-4932-ad76-689cbe58c430/67b1cedb-695a-4bd8-ab4d-b22a8a66c87b'
+        vstsFeedPackagePublish: 'Functions'
+        versionOption: 'major'
+        packagePublishDescription: 'Publish Functions as Artifacts'
       
 #--$(Pipeline.Workspace)/drop/$(Build.BuildId).zip
