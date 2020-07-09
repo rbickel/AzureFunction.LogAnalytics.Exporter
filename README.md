@@ -1,6 +1,6 @@
 # AzureFunction.LogAnalytics.Exporter
 
-Build Status
+**Build Status**
 
 [![Build Status](https://dev.azure.com/rabickel/Azure.Functions.LAContinuousExport/_apis/build/status/rbickel.AzureFunction.LogAnalytics.Exporter?branchName=dev)](https://dev.azure.com/rabickel/Azure.Functions.LAContinuousExport/_build/latest?definitionId=39&branchName=dev)
 
