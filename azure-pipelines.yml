@@ -58,6 +58,7 @@ stages:
         ContainerName: 'loganalyticsexporter'
 
     - task: AzureFileCopy@4
+      enabled: false
       inputs:
         SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
         azureSubscription: 'RBKL PUBLIC'
