@@ -37,7 +37,7 @@
         },
         "functionPackage": {
             "type": "string",
-            "defaultValue": "https://github.com/rbickel/AzureFunction.LogAnalytics.Exporter/raw/dev/webdeploy/LogAnalyticsExporter.zip",
+            "defaultValue": "https://rbklpublic.blob.core.windows.net/loganalyticsexporter/latest/LogAnalyticsExporter.zip",
             "metadata": {
                 "description": "The name of the function app that you wish to create."
             }
