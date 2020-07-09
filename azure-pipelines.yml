@@ -51,6 +51,7 @@ stages:
       artifact: drop
 
     - task: UniversalPackages@0
+      enabled: false
       inputs:
         command: 'publish'
         publishDirectory: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
