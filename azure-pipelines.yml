@@ -66,4 +66,5 @@ stages:
         ContainerName: 'AzureFunction.LogAnalytics.Exporter'
         BlobPrefix: 'latest'
 
+
 #--$(Pipeline.Workspace)/drop/$(Build.BuildId).zip
