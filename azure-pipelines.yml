@@ -54,7 +54,7 @@ stages:
         SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
         azureSubscription: 'RBKL PUBLIC'
         Destination: 'AzureBlob'
-        storage: 'rabickeltemplates'
+        storage: 'rbklpublic'
         ContainerName: 'AzureFunction.LogAnalytics.Exporter'
         BlobPrefix: '$(Build.BuildId)'      
     - task: AzureFileCopy@4
@@ -62,6 +62,6 @@ stages:
         SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
         azureSubscription: 'RBKL PUBLIC'
         Destination: 'AzureBlob'
-        storage: 'rabickeltemplates'
+        storage: 'rbklpublic'
         ContainerName: 'AzureFunction.LogAnalytics.Exporter'
         BlobPrefix: 'latest'
