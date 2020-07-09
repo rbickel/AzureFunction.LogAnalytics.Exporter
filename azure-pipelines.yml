@@ -52,7 +52,7 @@ stages:
     - task: AzureFileCopy@4
       inputs:
         SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        azureSubscription: 'rabickel Internal Subscription (6ff9e090-f045-45ba-adec-183d64c01b9b)'
+        azureSubscription: 'RBKL PUBLIC'
         Destination: 'AzureBlob'
         storage: 'rabickeltemplates'
         ContainerName: 'AzureFunction.LogAnalytics.Exporter'
@@ -60,11 +60,8 @@ stages:
     - task: AzureFileCopy@4
       inputs:
         SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        azureSubscription: 'rabickel Internal Subscription (6ff9e090-f045-45ba-adec-183d64c01b9b)'
+        azureSubscription: 'RBKL PUBLIC'
         Destination: 'AzureBlob'
         storage: 'rabickeltemplates'
         ContainerName: 'AzureFunction.LogAnalytics.Exporter'
         BlobPrefix: 'latest'
-
-
-#--$(Pipeline.Workspace)/drop/$(Build.BuildId).zip
