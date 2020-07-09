@@ -9,7 +9,7 @@ trigger:
      - dev
  paths:
   exclude:
-    - readme.md
+    - README.md
     - azure-pipelines.yml
 
 variables:
