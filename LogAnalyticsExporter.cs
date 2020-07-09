@@ -20,8 +20,8 @@ namespace Rbkl.io
         private static string _clientId = Environment.GetEnvironmentVariable("clientId");
         private static string _clientSecret = Environment.GetEnvironmentVariable("clientSecret");
         private const string _QUEUENAME = "batchcursors-queue";
-        private const string _INDEXERTABLENAME = "BatchIndexTable";      
-        private const string _EVENTHUBEPATH = "allevents"; 
+        private const string _INDEXERTABLENAME = "BatchIndexTable";
+        private const string _EVENTHUBEPATH = "allevents";
         private static string _CURSORFORMAT = "yyyy-MM-dd HH:mm:ss.fffffff";
         private const string _CURSORCOLUMNNAME = "cursor";
         private const int _TAKE = 1000;
@@ -53,34 +53,33 @@ namespace Rbkl.io
                 logger.LogError(e, "Impossible to find the latest cursor from the Table");
             }
 
-            var lastCursor = summary?.NextCursor ?? initialCursor;
-            var nextCursor = "";
+            var previousCursor = summary?.NextCursor ?? initialCursor;
 
             var analytics = LogAnalyticQuery.GetInstance(logger);
             await analytics.Authenticate(tenantId, _local, _clientId, _clientSecret);
 
+            bool exit = true;
             do
             {
+                exit = true;
                 var timer = Stopwatch.StartNew();
-                //get next cursors within the safety boundaries
-                nextCursor = await analytics.GetNextCursor($"datetime({lastCursor})", _SAFETYLAG, _TAKE);
-                logger.LogInformation($"next cursor: {nextCursor}");
-                if (string.IsNullOrEmpty(nextCursor))
+                
+                //get next cursor ranges within the safety boundaries
+                var ranges = analytics.GetCursorRanges($"{previousCursor}", _SAFETYLAG, _TAKE);
+                
+                await foreach(var r in ranges)
                 {
-                    logger.LogInformation("All logs added to the queue");
-                    break;
+                    logger.LogDebug($"Summary: {JsonConvert.SerializeObject(r)}");
+                    await queuesCollector.AddAsync(r);
+                    await summaryCollector.AddAsync(r);
+                    //continue the loop if some items were found
+                    exit = false;
+                    previousCursor = r.LastCursor;
                 }
-
-                //log to CloudTable
-                var message = new Summary(lastCursor, nextCursor, -1, "", timer.ElapsedMilliseconds, run);
-                await queuesCollector.AddAsync(message);
-                await summaryCollector.AddAsync(message);
                 await queuesCollector.FlushAsync();
                 await summaryCollector.FlushAsync();
 
-                lastCursor = nextCursor;
-
-            } while (true);
+            } while (exit);
 
             logger.LogInformation("Complete");
         }
@@ -102,75 +101,15 @@ namespace Rbkl.io
 
             var events = await analytics.FetchEvents($"datetime({summary.LastCursor})", $"datetime({summary.NextCursor})");
             await eventHub.SendEvents(events, logger);
-            
+
             summary = new Summary(summary.LastCursor, summary.NextCursor, events.Count, "OK", timer.ElapsedMilliseconds, run);
             summary.ETag = "*";  //Etag required for replace
             await summaryTable.ExecuteAsync(TableOperation.Replace(summary));
         }
 
-
-        //[FunctionName("PullLogsFromLogAnalytics")]
-        private static async Task PullLogsFromLogAnalytics(
-            [TimerTrigger("*/5 * * * * *")] TimerInfo myTimer,
-            [EventHub(_EVENTHUBEPATH, Connection = "EventHubConnection")] IAsyncCollector<string> outputEvents,
-            [Table("LogStreamingIndex")] IAsyncCollector<Summary> summaryCollector,
-            [Table("LogStreamingIndex")] CloudTable summaryTable,
-            ILogger logger
-        )
-        {
-            var run = DateTime.Now;
-            logger.LogInformation($"C# Timer trigger function executed at: {run}");
-
-            //Need to retrieve the latest cursor value
-            var initialCursor = DateTime.Now.AddMinutes(-31).ToUniversalTime().ToString(_CURSORFORMAT);
-
-            Summary summary = null;
-            var lastSummaryQuery = new TableQuery<Summary>().Take(1);
-            try
-            {
-                summary = (await summaryTable.ExecuteQuerySegmentedAsync(lastSummaryQuery, null)).FirstOrDefault();
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, "Impossible to find the latest cursor from the Table");
-            }
-
-            var lastCursor = summary?.NextCursor ?? initialCursor;
-            var nextCursor = "";
-
-            var analytics = LogAnalyticQuery.GetInstance(logger);
-            await analytics.Authenticate(tenantId, _local, _clientId, _clientSecret);
-
-            do
-            {
-                var timer = Stopwatch.StartNew();
-                //get next cursors within the safety boundaries
-                nextCursor = await analytics.GetNextCursor($"datetime({lastCursor})", _SAFETYLAG, _TAKE);
-                logger.LogInformation($"next cursor: {nextCursor}");
-                if (string.IsNullOrEmpty(nextCursor))
-                {
-                    logger.LogInformation("All logs processed");
-                    break;
-                }
-
-                var events = await analytics.FetchEvents($"datetime({lastCursor})", $"datetime({nextCursor})");
-
-                await outputEvents.SendEvents(events, logger);
-
-                //log to CloudTable
-                await summaryCollector.AddAsync(new Summary(lastCursor, nextCursor, events.Count, "OK", timer.ElapsedMilliseconds, run));
-                await summaryCollector.FlushAsync();
-
-                lastCursor = ((JValue)events.LastOrDefault()[_CURSORCOLUMNNAME])?.Value<string>() ?? null;
-
-            } while (true);
-
-            logger.LogInformation("Complete");
-        }
-
         private static async Task SendEvents(this IAsyncCollector<string> outputEvents, IEnumerable<object> events, ILogger logger)
         {
-            foreach(var e in events)
+            foreach (var e in events)
             {
                 await outputEvents.AddAsync(JsonConvert.SerializeObject(e));
             }
@@ -191,20 +130,26 @@ namespace Rbkl.io
             return await query.ExecuteQuery(workspaceId, q);
         }
 
-        public static async Task<string> GetNextCursor(this LogAnalyticQuery query, string after, string safetyLag, int limit)
+        public static async IAsyncEnumerable<Summary> GetCursorRanges(this LogAnalyticQuery query, string lastCursor, string safetyLag, int limit)
         {
+            //Making 1 second grouped ranges for better performances
             var q = $@"union withsource=SourceTable * 
                     | extend ItemId = _ItemId
                     | extend _ingestionTime = ingestion_time() 
                     | extend cursor = format_datetime(_ingestionTime,'yyyy-MM-dd HH:mm:ss.fffffff') 
-                    | where _ingestionTime > {after}
+                    | where _ingestionTime > datetime({lastCursor})
                     | where _ingestionTime <= {safetyLag}
                     | order by _ingestionTime asc
-                    | take {limit}
-                    | summarize count() by cursor";
-            return await query.FindNextCursor(workspaceId, q, limit);
+                    | limit 10000
+                    | summarize max(cursor), count() by bin(_ingestionTime, 1s)";
+
+            var cursors = await query.GetNextCursors(workspaceId, q, limit);
+
+            foreach (var c in cursors)
+            {
+                yield return new Summary(lastCursor, c.Item1){ EventsCount = c.Item2 };
+                lastCursor = c.Item1;
+            }
         }
     }
-
-
 }

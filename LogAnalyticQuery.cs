@@ -6,6 +6,7 @@ using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using Microsoft.Azure.Services.AppAuthentication;
+using System;
 
 namespace Rbkl.io
 {
@@ -52,15 +53,16 @@ namespace Rbkl.io
                 {"client_secret",clientSecret},
                 {"resource", "https://api.loganalytics.io"}
             };
-            _log.LogInformation(parameters.ToString());
+
             var body = new FormUrlEncodedContent(parameters);
             var response = await _http.PostAsync($"https://login.microsoftonline.com/{directoryId}/oauth2/token", body);
-            _log.LogInformation(response.StatusCode.ToString());
+            _log.LogInformation($"Authentication: {response.StatusCode.ToString()}");
             var content = await response.Content.ReadAsStringAsync();
-            _log.LogInformation(content);
-            _log.LogInformation(JsonConvert.SerializeObject(response.Headers));
+            _log.LogDebug(content);
+            _log.LogDebug(JsonConvert.SerializeObject(response.Headers));
             dynamic token = JsonConvert.DeserializeObject(content);
             _bearer = (string)token.access_token;
+            _log.LogDebug(_bearer);
         }
 
         public async Task<IList<Dictionary<string, object>>> ExecuteQuery(string workspaceId, string kusto)
@@ -89,7 +91,7 @@ namespace Rbkl.io
             }
         }
 
-        public async Task<string> FindNextCursor(string workspaceId, string kusto, int max)
+        public async Task<IEnumerable<Tuple<string, long>>> GetNextCursors(string workspaceId, string kusto, int max)
         {
             var content = await QueryApi(workspaceId, kusto);
 
@@ -98,7 +100,7 @@ namespace Rbkl.io
                 dynamic tables = JsonConvert.DeserializeObject(content);
                 var rows = (JArray)tables.tables[0].rows;
                 _log.LogInformation($"Retrieved {rows.Count} rows");
-                return FindNextCursor(rows, max);
+                return GroupCursors(rows, max);
             }
             catch
             {
@@ -119,13 +121,14 @@ namespace Rbkl.io
             httpRequest.Headers.Add("Authorization", "Bearer " + _bearer);
 
             var response = await _http.SendAsync(httpRequest);
-            _log.LogInformation(response.StatusCode.ToString());
+            _log.LogInformation($"Query result: {response.StatusCode.ToString()}");
             var content = await response.Content.ReadAsStringAsync();
+            _log.LogDebug(JsonConvert.SerializeObject(response.Headers));
+            
             if (!response.IsSuccessStatusCode)
             {
                 _log.LogError(content);
-                _log.LogInformation(JsonConvert.SerializeObject(response.Headers));
-                return null;
+                throw new HttpRequestException(content);
             }
             return content;
         }
@@ -135,7 +138,7 @@ namespace Rbkl.io
         private IList<Dictionary<string, object>> MergeResults(JArray columns, JArray rows)
         {
             string columnMetaName = "name";
-            //_log.LogInformation("merge results");
+            _log.LogDebug("merge table results");
             var result = new List<Dictionary<string, object>>();
 
             foreach (var r in rows.Values<JArray>())
@@ -155,20 +158,25 @@ namespace Rbkl.io
             }
             return result;
         }
-        private string FindNextCursor(JArray rows, int max)
+        
+        ///Input rows contains 3 columsn
+        /// 0: Bin grouping
+        /// 1: cursor
+        /// 2: count
+        private IEnumerable<Tuple<string, long>> GroupCursors(JArray rows, int max)
         {
-            int sum = 0;
-            string lastCursor = "";
+            long sum = 0;
             for (int i = 0; i < rows.Count; i++)
             {
-                lastCursor = rows[i].Value<JArray>()[0].Value<string>();
-                sum += rows[i].Value<JArray>()[1].Value<int>();
-                if (sum >= max)
+                //_log.LogDebug($"r = {rows[i]}");
+                string lastCursor = rows[i].Value<JArray>()[1].Value<string>();
+                sum += rows[i].Value<JArray>()[2].Value<long>();
+                if (sum >= max || rows.Count-1 == i)
                 {
-                    break;
+                    yield return new Tuple<string, long>(lastCursor, sum);
+                    sum = 0;
                 }
             }
-            return lastCursor;
         }
     }
 
