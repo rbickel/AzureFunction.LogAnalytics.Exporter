@@ -55,7 +55,7 @@ stages:
         azureSubscription: 'RBKL PUBLIC'
         Destination: 'AzureBlob'
         storage: 'rbklpublic'
-        ContainerName: 'AzureFunction.LogAnalytics.Exporter'
+        ContainerName: 'loganalyticsexporter'
         BlobPrefix: '$(Build.BuildId)'      
     - task: AzureFileCopy@4
       inputs:
@@ -63,5 +63,5 @@ stages:
         azureSubscription: 'RBKL PUBLIC'
         Destination: 'AzureBlob'
         storage: 'rbklpublic'
-        ContainerName: 'AzureFunction.LogAnalytics.Exporter'
+        ContainerName: 'loganalyticsexporter'
         BlobPrefix: 'latest'
