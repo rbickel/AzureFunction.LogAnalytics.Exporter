@@ -56,7 +56,7 @@ stages:
         Destination: 'AzureBlob'
         storage: 'rbklpublic'
         ContainerName: 'loganalyticsexporter'
-        BlobPrefix: '$(Build.BuildId)'      
+
     - task: AzureFileCopy@4
       inputs:
         SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
@@ -64,4 +64,3 @@ stages:
         Destination: 'AzureBlob'
         storage: 'rbklpublic'
         ContainerName: 'loganalyticsexporter'
-        BlobPrefix: 'latest'
