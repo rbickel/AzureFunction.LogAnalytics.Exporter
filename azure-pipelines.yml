@@ -56,3 +56,4 @@ stages:
         Destination: 'AzureBlob'
         storage: 'rbklpublic'
         ContainerName: 'loganalyticsexporter'
+        BlobPrefix: 'latest'
