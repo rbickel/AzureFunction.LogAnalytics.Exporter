@@ -4,7 +4,13 @@
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- master
+ branches:
+   include:
+     - dev
+ paths:
+  exclude:
+    - readme.md
+    - azure-pipelines.yml
 
 variables:
   # Agent VM image name
