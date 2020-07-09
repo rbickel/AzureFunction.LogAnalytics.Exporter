@@ -49,16 +49,21 @@ stages:
 
     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
       artifact: drop
-
-    - task: UniversalPackages@0
-      enabled: false
+    - task: AzureFileCopy@4
       inputs:
-        command: 'publish'
-        publishDirectory: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        feedsToUsePublish: 'internal'
-        vstsFeedPublish: 'eeb388af-a63e-4932-ad76-689cbe58c430/67b1cedb-695a-4bd8-ab4d-b22a8a66c87b'
-        vstsFeedPackagePublish: 'Functions'
-        versionOption: 'major'
-        packagePublishDescription: 'Publish Functions as Artifacts'
-      
+        SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        azureSubscription: 'rabickel Internal Subscription (6ff9e090-f045-45ba-adec-183d64c01b9b)'
+        Destination: 'AzureBlob'
+        storage: 'rabickeltemplates'
+        ContainerName: 'AzureFunction.LogAnalytics.Exporter'
+        BlobPrefix: '$(Build.BuildId)'      
+    - task: AzureFileCopy@4
+      inputs:
+        SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        azureSubscription: 'rabickel Internal Subscription (6ff9e090-f045-45ba-adec-183d64c01b9b)'
+        Destination: 'AzureBlob'
+        storage: 'rabickeltemplates'
+        ContainerName: 'AzureFunction.LogAnalytics.Exporter'
+        BlobPrefix: 'latest'
+
 #--$(Pipeline.Workspace)/drop/$(Build.BuildId).zip
