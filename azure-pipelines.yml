@@ -17,7 +17,7 @@ variables:
   vmImageName: 'vs2017-win2016'
 
   # Working Directory
-  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+  workingDirectory: '$(System.DefaultWorkingDirectory)'
 
 stages:
 - stage: Build
@@ -44,23 +44,14 @@ stages:
         rootFolderOrFile: '$(System.DefaultWorkingDirectory)/publish_output'
         includeRootFolder: false
         archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/LogAnalyticsExporter.zip
         replaceExistingArchive: true
 
-    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+    - publish: $(Build.ArtifactStagingDirectory)/LogAnalyticsExporter.zip
       artifact: drop
     - task: AzureFileCopy@4
       inputs:
-        SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        azureSubscription: 'RBKL PUBLIC'
-        Destination: 'AzureBlob'
-        storage: 'rbklpublic'
-        ContainerName: 'loganalyticsexporter'
-
-    - task: AzureFileCopy@4
-      enabled: false
-      inputs:
-        SourcePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        SourcePath: '$(Build.ArtifactStagingDirectory)/LogAnalyticsExporter.zip'
         azureSubscription: 'RBKL PUBLIC'
         Destination: 'AzureBlob'
         storage: 'rbklpublic'
