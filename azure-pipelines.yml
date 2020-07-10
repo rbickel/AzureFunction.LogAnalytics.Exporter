@@ -56,4 +56,15 @@ stages:
         Destination: 'AzureBlob'
         storage: 'rbklpublic'
         ContainerName: 'loganalyticsexporter'
+        BlobPrefix: '$(Build.BuildNumber)'
+    - task: AzureFileCopy@3
+      inputs:
+        SourcePath: '$(Build.ArtifactStagingDirectory)/LogAnalyticsExporter.zip'
+        azureSubscription: 'RBKL PUBLIC'
+        Destination: 'AzureBlob'
+        storage: 'rbklpublic'
+        ContainerName: 'loganalyticsexporter'
         BlobPrefix: 'latest'
+
+
+        
