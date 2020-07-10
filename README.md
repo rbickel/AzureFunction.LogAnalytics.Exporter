@@ -4,8 +4,6 @@
 
 [![Build Status](https://dev.azure.com/rabickel/Azure.Functions.LAContinuousExport/_apis/build/status/rbickel.AzureFunction.LogAnalytics.Exporter?branchName=dev)](https://dev.azure.com/rabickel/Azure.Functions.LAContinuousExport/_build/latest?definitionId=39&branchName=dev)
 
-**Deployment/Tests status**
-
 [![Deployment Status](https://vsrm.dev.azure.com/rabickel/_apis/public/Release/badge/eeb388af-a63e-4932-ad76-689cbe58c430/1/1)](https://vsrm.dev.azure.com/rabickel/_apis/public/Release/badge/eeb388af-a63e-4932-ad76-689cbe58c430/1/1)
 
 
