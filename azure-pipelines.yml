@@ -49,7 +49,7 @@ stages:
 
     - publish: $(Build.ArtifactStagingDirectory)/LogAnalyticsExporter.zip
       artifact: drop
-    - task: AzureFileCopy@4
+    - task: AzureFileCopy@3
       inputs:
         SourcePath: '$(Build.ArtifactStagingDirectory)/LogAnalyticsExporter.zip'
         azureSubscription: 'RBKL PUBLIC'
