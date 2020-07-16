@@ -21,6 +21,9 @@ namespace Rbkl.io
         private static string _clientSecret = Environment.GetEnvironmentVariable("clientSecret");
         private const string _QUEUENAME = "batchcursors-queue";
         private const string _INDEXERTABLENAME = "BatchIndexTable";
+        
+        //Event Hub Name. Will be overriden at runtime if specified in the connection string
+        //https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-event-hubs-output?tabs=csharp#configuration
         private const string _EVENTHUBEPATH = "allevents";
         private static string _CURSORFORMAT = "yyyy-MM-dd HH:mm:ss.fffffff";
         private const string _CURSORCOLUMNNAME = "cursor";
@@ -63,11 +66,11 @@ namespace Rbkl.io
             {
                 exit = true;
                 var timer = Stopwatch.StartNew();
-                
+
                 //get next cursor ranges within the safety boundaries
                 var ranges = analytics.GetCursorRanges($"{previousCursor}", _SAFETYLAG, _TAKE);
-                
-                await foreach(var r in ranges)
+
+                await foreach (var r in ranges)
                 {
                     logger.LogDebug($"Summary: {JsonConvert.SerializeObject(r)}");
                     await queuesCollector.AddAsync(r);
@@ -147,7 +150,7 @@ namespace Rbkl.io
 
             foreach (var c in cursors)
             {
-                yield return new Summary(lastCursor, c.Item1){ EventsCount = c.Item2 };
+                yield return new Summary(lastCursor, c.Item1) { EventsCount = c.Item2 };
                 lastCursor = c.Item1;
             }
         }

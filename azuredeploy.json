@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "appName": {
@@ -17,7 +17,7 @@
         "eventHubConnection": {
             "type": "securestring",
             "metadata": {
-                "description": "Event Hub Connection String"
+                "description": "Event Hub Connection String with write permissions to send events to"
             }
         },
         "storageAccountType": {
@@ -39,7 +39,7 @@
             "type": "string",
             "defaultValue": "https://rbklpublic.blob.core.windows.net/loganalyticsexporter/latest/LogAnalyticsExporter.zip",
             "metadata": {
-                "description": "The name of the function app that you wish to create."
+                "description": "The public URI of the package functions to deploy"
             }
         }
     },
@@ -84,7 +84,7 @@
             "location": "[parameters('location')]",
             "identity": {
                 "type": "SystemAssigned"
-            },            
+            },
             "kind": "functionapp",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -145,7 +145,7 @@
                         {
                             "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
                             "value": "[concat('InstrumentationKey=',reference(resourceId('microsoft.insights/components/', variables('applicationInsightsName')), '2015-05-01').InstrumentationKey)]"
-                        },                        
+                        },
                         {
                             "name": "FUNCTIONS_WORKER_RUNTIME",
                             "value": "[variables('functionWorkerRuntime')]"
@@ -159,12 +159,14 @@
             "name": "[variables('applicationInsightsName')]",
             "type": "microsoft.insights/components",
             "location": "West Europe",
+            "kind": " ",
             "tags": {
                 "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('applicationInsightsName'))]": "Resource"
             },
             "properties": {
+                "Application_Type": "web",
                 "ApplicationId": "[variables('applicationInsightsName')]",
-                "Request_Source": "IbizaWebAppExtensionCreate"
+                "Request_Source": "rest"
             }
         }
     ],
