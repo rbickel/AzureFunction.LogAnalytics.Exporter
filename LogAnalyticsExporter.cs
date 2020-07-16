@@ -21,7 +21,7 @@ namespace Rbkl.io
         private static string _clientSecret = Environment.GetEnvironmentVariable("clientSecret");
         private const string _QUEUENAME = "batchcursors-queue";
         private const string _INDEXERTABLENAME = "BatchIndexTable";
-        
+
         //Event Hub Name. Will be overriden at runtime if specified in the connection string
         //https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-event-hubs-output?tabs=csharp#configuration
         private const string _EVENTHUBEPATH = "allevents";
@@ -58,8 +58,17 @@ namespace Rbkl.io
 
             var previousCursor = summary?.NextCursor ?? initialCursor;
 
+            //Get the log analytic instance
             var analytics = LogAnalyticQuery.GetInstance(logger);
-            await analytics.Authenticate(tenantId, _local, _clientId, _clientSecret);
+            //Authenticate to thje log analytic REST API
+            if (_local)
+            {
+                await analytics.AuthenticateWithClient(tenantId, _clientId, _clientSecret);
+            }
+            else
+            {
+                await analytics.AuthenticateWithMSI();
+            }
 
             bool exit = true;
             do
@@ -97,7 +106,14 @@ namespace Rbkl.io
             var run = DateTime.Now;
             logger.LogInformation($"Processing batch {run}");
             var analytics = LogAnalyticQuery.GetInstance(logger);
-            await analytics.Authenticate(tenantId, _local, _clientId, _clientSecret);
+            if (_local)
+            {
+                await analytics.AuthenticateWithClient(tenantId, _clientId, _clientSecret);
+            }
+            else
+            {
+                await analytics.AuthenticateWithMSI();
+            }
 
             var timer = Stopwatch.StartNew();
             var summary = JsonConvert.DeserializeObject<Summary>(message);

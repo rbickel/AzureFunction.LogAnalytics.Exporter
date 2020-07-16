@@ -36,16 +36,17 @@ namespace Rbkl.io
 
         ///Authenticate using Serivce Principal
         ///https://dev.loganalytics.io/documentation/Authorization/AAD-Setup
-        public async Task Authenticate(string directoryId, bool useMSI, string clientId, string clientSecret)
+
+        public async Task AuthenticateWithMSI()
         {
             //Authenticate with MSI
-            if (!useMSI)
-            {
-                var tokenProvider = new AzureServiceTokenProvider();
-                _bearer = await tokenProvider.GetAccessTokenAsync("https://api.loganalytics.io");
-                return;
-            }
+            var tokenProvider = new AzureServiceTokenProvider();
+            _bearer = await tokenProvider.GetAccessTokenAsync("https://api.loganalytics.io");
+            return;
+        }
 
+        public async Task AuthenticateWithClient(string directoryId, string clientId, string clientSecret)
+        {
             //Use to authenticate without MSI
             var parameters = new Dictionary<string, string>{
                 {"grant_type","client_credentials"},
@@ -124,7 +125,7 @@ namespace Rbkl.io
             _log.LogInformation($"Query result: {response.StatusCode.ToString()}");
             var content = await response.Content.ReadAsStringAsync();
             _log.LogDebug(JsonConvert.SerializeObject(response.Headers));
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 _log.LogError(content);
@@ -158,7 +159,7 @@ namespace Rbkl.io
             }
             return result;
         }
-        
+
         ///Input rows contains 3 columsn
         /// 0: Bin grouping
         /// 1: cursor
@@ -171,7 +172,7 @@ namespace Rbkl.io
                 //_log.LogDebug($"r = {rows[i]}");
                 string lastCursor = rows[i].Value<JArray>()[1].Value<string>();
                 sum += rows[i].Value<JArray>()[2].Value<long>();
-                if (sum >= max || rows.Count-1 == i)
+                if (sum >= max || rows.Count - 1 == i)
                 {
                     yield return new Tuple<string, long>(lastCursor, sum);
                     sum = 0;
